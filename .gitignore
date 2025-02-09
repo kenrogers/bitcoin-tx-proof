@@ -37,3 +37,8 @@ yarn-error.log*
 
 # Optional test coverage directory
 .nyc_output/
+
+**/settings/Mainnet.toml
+**/settings/Testnet.toml
+.cache/**
+history.txt
