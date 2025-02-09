@@ -12,4 +12,4 @@ requirements = [
 [repl.remote_data]
 enabled = true
 api_url = "https://api.hiro.so"
-initial_height = 586956
+initial_height = 581021
