@@ -141,8 +141,9 @@ export async function bitcoinTxProof(
       }));
 
       debug('Calculating witness merkle proof...');
-      const { proof, root } = calculateWitnessMerkleProof(txs, txIndex);
-      debug('Witness merkle root:', root.toString('hex'));
+      const { proof, root: calculatedRoot } = calculateWitnessMerkleProof(txs, txIndex);
+      root = calculatedRoot.toString('hex');
+      debug('Witness merkle root:', root);
       debug('Witness proof steps:', proof.map(step => ({
         position: step.position,
         hash: step.data.toString('hex')
