@@ -123,6 +123,7 @@ export async function bitcoinTxProof(
 
   // For single-tx blocks, witness merkle proof is empty
   let witnessMerkleProof = '';
+  let witnessMerkleRoot = '';
   if (block.tx.length > 1 && txIndex !== 0) {
     debug('Calculating witness merkle data...');
     try {
@@ -140,6 +141,7 @@ export async function bitcoinTxProof(
 
       debug('Calculating witness merkle proof...');
       const { proof, root } = calculateWitnessMerkleProof(txs, txIndex);
+      witnessMerkleRoot = root.toString('hex');
       debug('Witness merkle root:', root.toString('hex'));
       debug('Witness proof steps:', proof.map(step => ({
         position: step.position,
@@ -175,6 +177,7 @@ export async function bitcoinTxProof(
     blockHeader,
     txIndex,
     merkleProofDepth: Math.ceil(Math.log2(Math.max(block.tx.length, 2))),
+    witnessMerkleRoot,
     witnessMerkleProof,
     witnessReservedValue: '0000000000000000000000000000000000000000000000000000000000000000',
     coinbaseTransaction: coinbaseTx.hex,

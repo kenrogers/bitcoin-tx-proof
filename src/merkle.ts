@@ -22,7 +22,7 @@ export function calculateWTXID(txHex: string): Buffer {
   if (!tx.hasWitnesses()) {
     return Buffer.from(tx.getId(), 'hex').reverse();
   }
-  return Buffer.from(tx.getHash(true).toString('hex'), 'hex').reverse();
+  return Buffer.from(tx.getHash(true).toString('hex'), 'hex');
 }
 
 export function calculateMerkleRoot(hashes: Buffer[]): Buffer {
