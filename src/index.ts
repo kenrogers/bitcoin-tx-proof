@@ -93,6 +93,8 @@ export async function bitcoinTxProof(
   if (txIndex === -1) {
     throw new Error('Transaction not found in block');
   }
+  const rawTx = await rpc.call('getrawtransaction', [txid, true, blockHash]);
+  const coinbaseTx = block.tx[0];
 
   let merkleProof: MerkleProofStep[] = [];
   let merkleProofHex = '';
@@ -100,13 +102,13 @@ export async function bitcoinTxProof(
     debug('Single transaction block - no merkle proof needed');
   } else {
     debug('Calculating merkle proof...');
-    merkleProof = getMerkleProof(txHashes, txIndex);
+    merkleProof = getMerkleProof(txHashes, 0);
     debug('Merkle proof:', merkleProof.map(step => ({
       position: step.position,
       hash: step.data.toString('hex')
     })));
 
-    if (!verifyMerkleProof(txid, merkleProof, block.merkleroot)) {
+    if (!verifyMerkleProof(coinbaseTx.txid, merkleProof, block.merkleroot)) {
       throw new Error('Merkle proof verification failed');
     }
     debug('Merkle proof verified successfully');
@@ -117,9 +119,6 @@ export async function bitcoinTxProof(
       .join('');
     debug('Merkle proof hex:', merkleProofHex);
   }
-
-  const rawTx = await rpc.call('getrawtransaction', [txid, true, blockHash]);
-  const coinbaseTx = block.tx[0];
 
   // For single-tx blocks, witness merkle proof is empty
   let witnessMerkleProof = '';
@@ -193,4 +192,4 @@ export async function bitcoinTxProof(
   return result;
 }
 
-export { BitcoinRPCConfig, TxProofResult };
+export { BitcoinRPCConfig, TxProofResult, calculateWTXID };
