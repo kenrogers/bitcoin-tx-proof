@@ -12,7 +12,9 @@ export interface TxProofResult {
   merkleProofDepth: number;
   witnessMerkleRoot: string;
   witnessMerkleProof: string;
+  witnessMerkleProofArray: Uint8Array<ArrayBuffer>[];
   witnessReservedValue: string;
   coinbaseTransaction: string;
   coinbaseMerkleProof: string;
+  coinbaseMerkleProofArray: Uint8Array<ArrayBuffer>[];
 }
