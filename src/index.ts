@@ -123,6 +123,8 @@ export async function bitcoinTxProof(
 
   // For single-tx blocks, witness merkle proof is empty
   let witnessMerkleProof = '';
+  let witnessMerkleProofArray: Uint8Array<ArrayBuffer>[] = [];
+  let root = "";
   if (block.tx.length > 1 && txIndex !== 0) {
     debug('Calculating witness merkle data...');
     try {
@@ -139,8 +141,9 @@ export async function bitcoinTxProof(
       }));
 
       debug('Calculating witness merkle proof...');
-      const { proof, root } = calculateWitnessMerkleProof(txs, txIndex);
-      debug('Witness merkle root:', root.toString('hex'));
+      const { proof, root: calculatedRoot } = calculateWitnessMerkleProof(txs, txIndex);
+      root = calculatedRoot.toString('hex');
+      debug('Witness merkle root:', root);
       debug('Witness proof steps:', proof.map(step => ({
         position: step.position,
         hash: step.data.toString('hex')
@@ -154,6 +157,7 @@ export async function bitcoinTxProof(
         witnessMerkleProof = proof
           .map(step => step.data.toString('hex'))
           .join('');
+        witnessMerkleProofArray = proof.map(step => new Uint8Array(step.data));
         debug('Witness merkle proof hex:', witnessMerkleProof);
       }
     } catch (error) {
@@ -175,10 +179,13 @@ export async function bitcoinTxProof(
     blockHeader,
     txIndex,
     merkleProofDepth: Math.ceil(Math.log2(Math.max(block.tx.length, 2))),
+    witnessMerkleRoot: root,
     witnessMerkleProof,
+    witnessMerkleProofArray,
     witnessReservedValue: '0000000000000000000000000000000000000000000000000000000000000000',
     coinbaseTransaction: coinbaseTx.hex,
-    coinbaseMerkleProof: merkleProofHex
+    coinbaseMerkleProof: merkleProofHex,
+    coinbaseMerkleProofArray: merkleProof.map(step => new Uint8Array(step.data))
   };
 
   debug('Final result:', {

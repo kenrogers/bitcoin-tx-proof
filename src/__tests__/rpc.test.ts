@@ -1,7 +1,6 @@
 import { BitcoinRPC } from '../rpc';
-import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import RateLimit from 'axios-rate-limit';
-import NodeCache from 'node-cache';
 
 jest.mock('axios');
 jest.mock('axios-rate-limit');
