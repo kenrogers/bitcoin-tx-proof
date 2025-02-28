@@ -1,3 +1,4 @@
+import { bytesToHex } from '@clarigen/core';
 import { Transaction } from 'bitcoinjs-lib';
 import crypto from 'crypto';
 
@@ -136,10 +137,10 @@ export function calculateWitnessMerkleProof(
 ): {
   proof: MerkleProofStep[];
   root: Buffer;
+  wtxids: Buffer[];
 } {
   const wtxids = txs.map(tx => calculateWTXID(tx));
   const proof = getMerkleProof(wtxids, index);
   const root = calculateMerkleRoot(wtxids);
-
-  return { proof, root };
+  return { proof, root, wtxids };
 }

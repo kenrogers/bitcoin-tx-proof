@@ -1,3 +1,4 @@
+import { Transaction } from 'bitcoinjs-lib';
 import {
   calculateWitnessMerkleProof,
   calculateWTXID,
@@ -7,6 +8,8 @@ import {
 } from './merkle';
 import { BitcoinRPC } from './rpc';
 import { BitcoinRPCConfig, TxProofResult } from './types';
+import { bytesToHex } from '@clarigen/core';
+import { proofToBuffers } from './conversion';
 
 const DEBUG = process.env.DEBUG === 'true';
 
@@ -99,7 +102,7 @@ export async function bitcoinTxProof(
   const rawBlock = await rpc.call('getblock', [blockHash, 0]);
   const blockHeader = extractBlockHeader(rawBlock);
 
-  // Get transaction hashes and create merkle proof
+  // Get transaction hashes and create merkle proof for coinbase tx
   const txHashes = getTxHashes(block);
   debug(
     'Transaction hashes (internal order):',
@@ -112,8 +115,13 @@ export async function bitcoinTxProof(
   if (txIndex === -1) {
     throw new Error('Transaction not found in block');
   }
+
   const rawTx = await rpc.call('getrawtransaction', [txid, true, blockHash]);
   const coinbaseTx = block.tx[0];
+
+  const legacyCoinbaseTx = Transaction.fromHex(coinbaseTx.hex);
+  legacyCoinbaseTx.stripWitnesses();
+  const legacyCoinbaseTxHex = legacyCoinbaseTx.toHex();
 
   let merkleProof: MerkleProofStep[] = [];
   let merkleProofHex = '';
@@ -142,7 +150,6 @@ export async function bitcoinTxProof(
 
   // For single-tx blocks, witness merkle proof is empty
   let witnessMerkleProof = '';
-  let witnessMerkleProofArray: Uint8Array<ArrayBuffer>[] = [];
   let root = '';
   if (block.tx.length > 1 && txIndex !== 0) {
     debug('Calculating witness merkle data...');
@@ -163,7 +170,7 @@ export async function bitcoinTxProof(
       );
 
       debug('Calculating witness merkle proof...');
-      const { proof, root: calculatedRoot } = calculateWitnessMerkleProof(txs, txIndex);
+      const { proof, root: calculatedRoot, wtxids } = calculateWitnessMerkleProof(txs, txIndex);
       root = calculatedRoot.toString('hex');
       debug('Witness merkle root:', root);
       debug(
@@ -174,13 +181,22 @@ export async function bitcoinTxProof(
         }))
       );
 
+      if (
+        !verifyMerkleProof(
+          bytesToHex(wtxids[txIndex].reverse()),
+          proof,
+          bytesToHex(calculatedRoot.reverse())
+        )
+      ) {
+        throw new Error('Merkle proof verification failed');
+      }
+
       if (proof.length === 0) {
         debug('No witness proof needed (single tx or no witness data)');
         witnessMerkleProof = '';
       } else {
         // Convert proof to hex string
         witnessMerkleProof = proof.map(step => step.data.toString('hex')).join('');
-        witnessMerkleProofArray = proof.map(step => new Uint8Array(step.data));
         debug('Witness merkle proof hex:', witnessMerkleProof);
       }
     } catch (error) {
@@ -208,21 +224,19 @@ export async function bitcoinTxProof(
     merkleProofDepth: Math.ceil(Math.log2(Math.max(block.tx.length, 2))),
     witnessMerkleRoot: root,
     witnessMerkleProof,
-    witnessMerkleProofArray,
     witnessReservedValue: '0000000000000000000000000000000000000000000000000000000000000000',
-    coinbaseTransaction: coinbaseTx.hex,
+    legacyCoinbaseTxHex: legacyCoinbaseTxHex,
     coinbaseMerkleProof: merkleProofHex,
-    coinbaseMerkleProofArray: merkleProof.map(step => new Uint8Array(step.data)),
   };
 
   debug('Final result:', {
     ...result,
     transaction: result.transaction.substring(0, 64) + '...',
-    coinbaseTransaction: result.coinbaseTransaction.substring(0, 64) + '...',
+    legacyCoinbaseTxHex: result.legacyCoinbaseTxHex.substring(0, 64) + '...',
   });
 
   return result;
 }
 
-export { calculateWTXID };
+export { calculateWTXID, proofToBuffers };
 export type { BitcoinRPCConfig, TxProofResult };
