@@ -4,9 +4,9 @@ import {
   getMerkleProof,
   hash256,
   MerkleProofStep,
-} from "./merkle";
-import { BitcoinRPC } from "./rpc";
-import { BitcoinRPCConfig, TxProofResult } from "./types";
+} from './merkle';
+import { BitcoinRPC } from './rpc';
+import { BitcoinRPCConfig, TxProofResult } from './types';
 
 const DEBUG = process.env.DEBUG === 'true';
 
@@ -30,14 +30,21 @@ function getTxHashes(block: any): Buffer[] {
   return hashes;
 }
 
-function verifyMerkleProof(txid: string, proofSteps: MerkleProofStep[], merkleRoot: string): boolean {
+function verifyMerkleProof(
+  txid: string,
+  proofSteps: MerkleProofStep[],
+  merkleRoot: string
+): boolean {
   debug('\n=== Starting Merkle Proof Verification ===');
   debug('Transaction ID:', txid);
   debug('Expected Merkle Root:', merkleRoot);
-  debug('Proof steps:', proofSteps.map(step => ({
-    position: step.position,
-    hash: step.data.toString('hex')
-  })));
+  debug(
+    'Proof steps:',
+    proofSteps.map(step => ({
+      position: step.position,
+      hash: step.data.toString('hex'),
+    }))
+  );
 
   // Convert txid to internal byte order (reverse)
   let currentHash = Buffer.from(txid, 'hex').reverse();
@@ -49,9 +56,10 @@ function verifyMerkleProof(txid: string, proofSteps: MerkleProofStep[], merkleRo
     debug('Proof element:', step.data.toString('hex'));
     debug('Position:', step.position);
 
-    const combined = step.position === 'left' ?
-      Buffer.concat([step.data, currentHash]) :
-      Buffer.concat([currentHash, step.data]);
+    const combined =
+      step.position === 'left'
+        ? Buffer.concat([step.data, currentHash])
+        : Buffer.concat([currentHash, step.data]);
 
     debug('Concatenated:', combined.toString('hex'));
     currentHash = hash256(combined);
@@ -65,7 +73,9 @@ function verifyMerkleProof(txid: string, proofSteps: MerkleProofStep[], merkleRo
   debug('Expected root:', merkleRoot);
 
   if (calculatedRoot !== merkleRoot) {
-    throw new Error(`Merkle proof verification failed: Expected ${merkleRoot} but got ${calculatedRoot}`);
+    throw new Error(
+      `Merkle proof verification failed: Expected ${merkleRoot} but got ${calculatedRoot}`
+    );
   }
 
   return true;
@@ -91,7 +101,10 @@ export async function bitcoinTxProof(
 
   // Get transaction hashes and create merkle proof
   const txHashes = getTxHashes(block);
-  debug('Transaction hashes (internal order):', txHashes.map(h => h.toString('hex')));
+  debug(
+    'Transaction hashes (internal order):',
+    txHashes.map(h => h.toString('hex'))
+  );
 
   const txIndex = block.tx.findIndex((tx: any) => tx.txid === txid);
   debug('Transaction index:', txIndex);
@@ -99,7 +112,7 @@ export async function bitcoinTxProof(
   if (txIndex === -1) {
     throw new Error('Transaction not found in block');
   }
-  const rawTx = await rpc.call("getrawtransaction", [txid, true, blockHash]);
+  const rawTx = await rpc.call('getrawtransaction', [txid, true, blockHash]);
   const coinbaseTx = block.tx[0];
 
   let merkleProof: MerkleProofStep[] = [];
@@ -109,10 +122,13 @@ export async function bitcoinTxProof(
   } else {
     debug('Calculating merkle proof...');
     merkleProof = getMerkleProof(txHashes, 0);
-    debug('Merkle proof:', merkleProof.map(step => ({
-      position: step.position,
-      hash: step.data.toString('hex')
-    })));
+    debug(
+      'Merkle proof:',
+      merkleProof.map(step => ({
+        position: step.position,
+        hash: step.data.toString('hex'),
+      }))
+    );
 
     if (!verifyMerkleProof(txid, merkleProof, block.merkleroot)) {
       throw new Error('Merkle proof verification failed');
@@ -120,48 +136,50 @@ export async function bitcoinTxProof(
     debug('Merkle proof verified successfully');
 
     // Convert proof steps to hex string
-    merkleProofHex = merkleProof
-      .map(step => step.data.toString('hex'))
-      .join('');
+    merkleProofHex = merkleProof.map(step => step.data.toString('hex')).join('');
     debug('Merkle proof hex:', merkleProofHex);
   }
 
   // For single-tx blocks, witness merkle proof is empty
   let witnessMerkleProof = '';
   let witnessMerkleProofArray: Uint8Array<ArrayBuffer>[] = [];
-  let root = "";
+  let root = '';
   if (block.tx.length > 1 && txIndex !== 0) {
     debug('Calculating witness merkle data...');
     try {
       debug('Fetching raw transactions for witness merkle tree...');
-      const txs = await Promise.all(block.tx.map(async (tx: any) => {
-        const rawTxData = await rpc.call('getrawtransaction', [tx.txid, true, blockHash]);
-        const hasWitness = rawTxData.hex.includes('0001') || rawTxData.vin.some((input: any) => input.txinwitness);
-        debug(`Transaction ${tx.txid}:`, {
-          hasWitness,
-          vinLength: rawTxData.vin.length,
-          hasWitnessData: rawTxData.vin.some((input: any) => input.txinwitness)
-        });
-        return rawTxData.hex;
-      }));
+      const txs = await Promise.all(
+        block.tx.map(async (tx: any) => {
+          const rawTxData = await rpc.call('getrawtransaction', [tx.txid, true, blockHash]);
+          const hasWitness =
+            rawTxData.hex.includes('0001') || rawTxData.vin.some((input: any) => input.txinwitness);
+          debug(`Transaction ${tx.txid}:`, {
+            hasWitness,
+            vinLength: rawTxData.vin.length,
+            hasWitnessData: rawTxData.vin.some((input: any) => input.txinwitness),
+          });
+          return rawTxData.hex;
+        })
+      );
 
       debug('Calculating witness merkle proof...');
       const { proof, root: calculatedRoot } = calculateWitnessMerkleProof(txs, txIndex);
       root = calculatedRoot.toString('hex');
       debug('Witness merkle root:', root);
-      debug('Witness proof steps:', proof.map(step => ({
-        position: step.position,
-        hash: step.data.toString('hex')
-      })));
+      debug(
+        'Witness proof steps:',
+        proof.map(step => ({
+          position: step.position,
+          hash: step.data.toString('hex'),
+        }))
+      );
 
       if (proof.length === 0) {
         debug('No witness proof needed (single tx or no witness data)');
         witnessMerkleProof = '';
       } else {
         // Convert proof to hex string
-        witnessMerkleProof = proof
-          .map(step => step.data.toString('hex'))
-          .join('');
+        witnessMerkleProof = proof.map(step => step.data.toString('hex')).join('');
         witnessMerkleProofArray = proof.map(step => new Uint8Array(step.data));
         debug('Witness merkle proof hex:', witnessMerkleProof);
       }
@@ -172,10 +190,14 @@ export async function bitcoinTxProof(
       }
     }
   } else {
-    debug('Skipping witness merkle proof:',
-      block.tx.length === 1 ? 'single-tx block' :
-      txIndex === 0 ? 'coinbase transaction' :
-      'unknown reason');
+    debug(
+      'Skipping witness merkle proof:',
+      block.tx.length === 1
+        ? 'single-tx block'
+        : txIndex === 0
+        ? 'coinbase transaction'
+        : 'unknown reason'
+    );
   }
 
   const result: TxProofResult = {
@@ -190,13 +212,13 @@ export async function bitcoinTxProof(
     witnessReservedValue: '0000000000000000000000000000000000000000000000000000000000000000',
     coinbaseTransaction: coinbaseTx.hex,
     coinbaseMerkleProof: merkleProofHex,
-    coinbaseMerkleProofArray: merkleProof.map(step => new Uint8Array(step.data))
+    coinbaseMerkleProofArray: merkleProof.map(step => new Uint8Array(step.data)),
   };
 
   debug('Final result:', {
     ...result,
     transaction: result.transaction.substring(0, 64) + '...',
-    coinbaseTransaction: result.coinbaseTransaction.substring(0, 64) + '...'
+    coinbaseTransaction: result.coinbaseTransaction.substring(0, 64) + '...',
   });
 
   return result;

@@ -19,7 +19,7 @@ describe('BitcoinRPC', () => {
   const config = {
     url: 'http://localhost:8332',
     username: 'user',
-    password: 'pass'
+    password: 'pass',
   };
 
   let mockPost: jest.Mock;
@@ -34,7 +34,7 @@ describe('BitcoinRPC', () => {
       defaults: {},
       interceptors: {
         request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
-        response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() }
+        response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
       },
       getUri: jest.fn(),
       request: jest.fn(),
@@ -51,7 +51,7 @@ describe('BitcoinRPC', () => {
       getQueue: jest.fn(),
       getMaxRPS: jest.fn(),
       setMaxRPS: jest.fn(),
-      setRateLimitOptions: jest.fn()
+      setRateLimitOptions: jest.fn(),
     } as unknown as MockedRateLimitedAxios;
 
     mockedRateLimit.mockReturnValue(mockRateLimitedAxios);
@@ -72,9 +72,7 @@ describe('BitcoinRPC', () => {
     const mockResponse = { data: { error: { message: 'RPC error' } } };
     mockPost.mockResolvedValueOnce(mockResponse);
 
-    await expect(rpc.call('getblock', ['123']))
-      .rejects
-      .toThrow('RPC Error: RPC error');
+    await expect(rpc.call('getblock', ['123'])).rejects.toThrow('RPC Error: RPC error');
   });
 
   test('uses cache for repeated calls', async () => {

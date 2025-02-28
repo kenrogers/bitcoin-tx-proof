@@ -28,6 +28,7 @@
     "@clarigen/test": "^2.1.2",
     "@hirosystems/clarinet-sdk": "2.15.0",
     "@jest/types": "^29.5.0",
+    "@stacks/prettier-config": "^0.0.10",
     "@stacks/transactions": "^6.17.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.11.19",
@@ -36,11 +37,12 @@
     "chokidar-cli": "^3.0.0",
     "eslint": "^8.0.0",
     "jest": "^29.5.0",
-    "prettier": "^2.8.0",
+    "prettier": "^2.8.8",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
+  "prettier": "@stacks/prettier-config",
   "engines": {
     "node": "22"
   },

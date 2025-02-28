@@ -23,7 +23,7 @@ describe('Input Validation', () => {
     const validConfig = {
       url: 'http://localhost:8332',
       username: 'user',
-      password: 'pass'
+      password: 'pass',
     };
     expect(() => validateRPCConfig(validConfig)).not.toThrow();
   });
@@ -32,7 +32,7 @@ describe('Input Validation', () => {
     const invalidConfig = {
       url: 'invalid-url',
       username: 'user',
-      password: 'pass'
+      password: 'pass',
     };
     expect(() => validateRPCConfig(invalidConfig)).toThrow();
   });
