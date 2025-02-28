@@ -3,9 +3,7 @@ import { BitcoinRPCConfig } from '../types';
 
 describe('Use mainnet block 553724', () => {
   const rpcConfig: BitcoinRPCConfig = {
-    url: 'http://192.168.129.114:8332',
-    username: 'fivemonkeys',
-    password: 'stackstacks',
+    url: 'http://localhost:8332',
   };
 
   test('verify witness merkle root ', async () => {
