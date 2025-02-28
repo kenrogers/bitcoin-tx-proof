@@ -9,7 +9,6 @@ import {
 import { BitcoinRPC } from './rpc';
 import { BitcoinRPCConfig, TxProofResult } from './types';
 import { bytesToHex } from '@clarigen/core';
-import { proofToBuffers } from './conversion';
 
 const DEBUG = process.env.DEBUG === 'true';
 
@@ -238,5 +237,5 @@ export async function bitcoinTxProof(
   return result;
 }
 
-export { calculateWTXID, proofToBuffers };
+export { calculateWTXID };
 export type { BitcoinRPCConfig, TxProofResult };

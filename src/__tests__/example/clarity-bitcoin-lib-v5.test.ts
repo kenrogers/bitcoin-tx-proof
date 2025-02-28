@@ -11,9 +11,10 @@ import {
   UIntCV,
   uintCV,
 } from '@stacks/transactions';
-import { BitcoinRPCConfig, bitcoinTxProof, proofToBuffers, TxProofResult } from '../..';
+import { BitcoinRPCConfig, bitcoinTxProof, TxProofResult } from '../..';
 import { cachedProof } from './cached-proof';
 import { project } from './clarigen-types';
+import { proofToBuffers } from './conversion';
 const { clarityBitcoinLibV5 } = projectFactory(project, 'simnet');
 
 describe('Clarity Bitcoin Lib v5 verification', () => {
