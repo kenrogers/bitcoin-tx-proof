@@ -130,7 +130,7 @@ export async function bitcoinTxProof(
       }))
     );
 
-    if (!verifyMerkleProof(txid, merkleProof, block.merkleroot)) {
+    if (!verifyMerkleProof(coinbaseTx.txid, merkleProof, block.merkleroot)) {
       throw new Error('Merkle proof verification failed');
     }
     debug('Merkle proof verified successfully');
