@@ -11,9 +11,9 @@ const config: Config.InitialOptions = {
       branches: 60,
       functions: 60,
       lines: 60,
-      statements: 60
-    }
-  }
+      statements: 60,
+    },
+  },
 };
 
 export default config;
