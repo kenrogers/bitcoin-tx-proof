@@ -1,4 +1,4 @@
-import { BitcoinRPCConfig } from './types';
+import { BitcoinRPCConfig } from './types.js';
 
 export function validateTxId(txid: string): void {
   if (!/^[a-fA-F0-9]{64}$/.test(txid)) {

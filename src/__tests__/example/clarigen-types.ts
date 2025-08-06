@@ -1,5 +1,5 @@
 
-import type { TypedAbiArg, TypedAbiFunction, TypedAbiMap, TypedAbiVariable, Response } from '@clarigen/core';
+import type { TypedAbiArg, TypedAbiFunction, TypedAbiVariable, Response } from '@clarigen/core';
 
 export const contracts = {
   clarityBitcoinLibV5: {

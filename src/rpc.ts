@@ -1,13 +1,13 @@
-import axios, { AxiosError } from 'axios';
-import RateLimit from 'axios-rate-limit';
+import axios, { AxiosError, AxiosInstance } from 'axios';
+import rateLimit from 'axios-rate-limit';
 import NodeCache from 'node-cache';
-import { BitcoinRPCConfig } from './types';
+import { BitcoinRPCConfig } from './types.js';
 
 const DEBUG = process.env.DEBUG === 'true';
 
 function debug(...args: any[]) {
   if (DEBUG) {
-    console.log('\x1b[35m[RPC]\x1b[0m', ...args);  // Magenta color for RPC logs
+    console.log('\x1b[35m[RPC]\x1b[0m', ...args); // Magenta color for RPC logs
   }
 }
 
@@ -15,20 +15,20 @@ export class BitcoinRPC {
   private url: string;
   private auth?: { username: string; password: string };
   private cache: NodeCache;
-  private axiosInstance;
+  private axiosInstance: AxiosInstance;
 
   constructor(config: BitcoinRPCConfig) {
     this.url = config.url;
     if (config.username && config.password) {
       this.auth = {
         username: config.username,
-        password: config.password
+        password: config.password,
       };
     }
     this.cache = new NodeCache({ stdTTL: 600 }); // 10 minute cache
-    this.axiosInstance = RateLimit(axios.create(), {
+    this.axiosInstance = rateLimit(axios.create(), {
       maxRequests: 10,
-      perMilliseconds: 1000
+      perMilliseconds: 1000,
     });
   }
 
@@ -42,15 +42,19 @@ export class BitcoinRPC {
 
     debug('Making RPC call:', method, params);
     try {
-      const response = await this.axiosInstance.post(this.url, {
-        jsonrpc: '2.0',
-        id: 'bitcointxproof',
-        method,
-        params
-      }, {
-        auth: this.auth,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await this.axiosInstance.post(
+        this.url,
+        {
+          jsonrpc: '2.0',
+          id: 'bitcointxproof',
+          method,
+          params,
+        },
+        {
+          auth: this.auth,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
 
       debug('RPC response:', response.data);
 
@@ -67,9 +71,11 @@ export class BitcoinRPC {
           debug('RPC Error Response:', {
             status: axiosError.response.status,
             statusText: axiosError.response.statusText,
-            data: axiosError.response.data
+            data: axiosError.response.data,
           });
-          throw new Error(`RPC Error (${axiosError.response.status}): ${JSON.stringify(axiosError.response.data)}`);
+          throw new Error(
+            `RPC Error (${axiosError.response.status}): ${JSON.stringify(axiosError.response.data)}`
+          );
         } else if (axiosError.request) {
           debug('RPC Request Error:', axiosError.message);
           throw new Error(`RPC Request Failed: ${axiosError.message}`);

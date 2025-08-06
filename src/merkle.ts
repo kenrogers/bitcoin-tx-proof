@@ -1,3 +1,4 @@
+import { bytesToHex } from '@clarigen/core';
 import { Transaction } from 'bitcoinjs-lib';
 import crypto from 'crypto';
 
@@ -22,7 +23,7 @@ export function calculateWTXID(txHex: string): Buffer {
   if (!tx.hasWitnesses()) {
     return Buffer.from(tx.getId(), 'hex').reverse();
   }
-  return Buffer.from(tx.getHash(true).toString('hex'), 'hex').reverse();
+  return Buffer.from(tx.getHash(true).toString('hex'), 'hex');
 }
 
 export function calculateMerkleRoot(hashes: Buffer[]): Buffer {
@@ -72,14 +73,14 @@ export function getMerkleProof(hashes: Buffer[], index: number): MerkleProofStep
       debug('Adding proof step:', position, currentLevel[pairIndex].toString('hex'));
       proof.push({
         position,
-        data: currentLevel[pairIndex]
+        data: currentLevel[pairIndex],
       });
     } else {
       // If there's no pair (odd number of nodes), duplicate the current node
       debug('Adding duplicate proof step:', position, currentLevel[currentIndex].toString('hex'));
       proof.push({
         position,
-        data: currentLevel[currentIndex]
+        data: currentLevel[currentIndex],
       });
     }
 
@@ -96,10 +97,13 @@ export function getMerkleProof(hashes: Buffer[], index: number): MerkleProofStep
     currentIndex = Math.floor(currentIndex / 2);
   }
 
-  debug('Generated proof steps:', proof.map(step => ({
-    position: step.position,
-    hash: step.data.toString('hex')
-  })));
+  debug(
+    'Generated proof steps:',
+    proof.map(step => ({
+      position: step.position,
+      hash: step.data.toString('hex'),
+    }))
+  );
   return proof;
 }
 
@@ -112,9 +116,10 @@ export function verifyMerkleProof(txHash: Buffer, proof: MerkleProofStep[], root
 
   for (const step of proof) {
     debug('Proof step:', step.position, step.data.toString('hex'));
-    const combined = step.position === 'left' ?
-      Buffer.concat([step.data, currentHash]) :
-      Buffer.concat([currentHash, step.data]);
+    const combined =
+      step.position === 'left'
+        ? Buffer.concat([step.data, currentHash])
+        : Buffer.concat([currentHash, step.data]);
 
     debug('Combined:', combined.toString('hex'));
     currentHash = hash256(combined);
@@ -126,13 +131,16 @@ export function verifyMerkleProof(txHash: Buffer, proof: MerkleProofStep[], root
   return currentHash.equals(root);
 }
 
-export function calculateWitnessMerkleProof(txs: string[], index: number): {
-  proof: MerkleProofStep[],
-  root: Buffer
+export function calculateWitnessMerkleProof(
+  txs: string[],
+  index: number
+): {
+  proof: MerkleProofStep[];
+  root: Buffer;
+  wtxids: Buffer[];
 } {
   const wtxids = txs.map(tx => calculateWTXID(tx));
   const proof = getMerkleProof(wtxids, index);
   const root = calculateMerkleRoot(wtxids);
-
-  return { proof, root };
+  return { proof, root, wtxids };
 }
